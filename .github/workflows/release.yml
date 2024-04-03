@@ -1,0 +1,49 @@
+name: Release
+
+on:
+    push:
+        tags:
+            - "*"
+
+jobs:
+    release:
+        strategy:
+            matrix:
+                os: [ubuntu-22.04]
+        runs-on: ${{ matrix.os }}
+        name: Release
+        steps:
+            - name: Checkout current commit/branch/tag
+              uses: actions/checkout@v3
+
+            - name: Set up pnpm
+              uses: pnpm/action-setup@v2
+              with:
+                  version: 8
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: 18
+
+            - name: Install pnpm dependencies
+              run: pnpm install
+              env:
+                  NODE_ENV: development
+
+            - name: Lint files
+              run: pnpm lint
+
+            - name: Typechecks
+              run: pnpm typecheck
+
+            - name: Build
+              run: pnpm build
+              env:
+                  NODE_ENV: production
+
+            - name: Package and publish
+              run: pnpm package:publish
+              env:
+                  CI: true
+                  GH_TOKEN: ${{ secrets.GH_TOKEN }}
